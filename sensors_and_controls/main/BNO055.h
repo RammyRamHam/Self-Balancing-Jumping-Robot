@@ -14,11 +14,6 @@
 /** Offsets registers **/
 #define NUM_BNO055_OFFSET_REGISTERS 22
 
-typedef struct {
-    uint8_t devAdd;
-    bno055_opmode_t mode;  
-} bno055_t;
-
 /** A structure to represent offsets **/
 typedef struct {
   int16_t accel_offset_x; /**< x acceleration offset */
@@ -253,40 +248,45 @@ typedef enum {
   VECTOR_EULER = BNO055_EULER_H_LSB_ADDR,
   VECTOR_LINEARACCEL = BNO055_LINEAR_ACCEL_DATA_X_LSB_ADDR,
   VECTOR_GRAVITY = BNO055_GRAVITY_DATA_X_LSB_ADDR
-} adafruit_vector_type_t;
+} bno055_vector_type_t;
 
+typedef struct {
+    uint8_t devAdd;
+    bno055_opmode_t mode;  
+} bno055_t;
 
 //void begin(bno055_opmode_t mode = OPERATION_MODE_NDOF);
-bool begin(bno055_t* dev);
-void setMode(bno055_opmode_t mode, bno055_t* dev);
-void setAxisRemap(bno055_axis_remap_config_t remapcode, bno055_t* dev);
-void setAxisSign(bno055_axis_remap_sign_t remapsign, bno055_t* dev);
-void getRevInfo(bno055_rev_info_t *, bno055_t* dev);
-void setExtCrystalUse(bool usextal, bno055_t* dev);
-void getSystemStatus(uint8_t *system_status, uint8_t *self_test_result,
+bool bno055Begin(bno055_opmode_t mode, bno055_t* dev);
+void bno055Reset(bno055_t* dev);
+void bno055SetMode(bno055_opmode_t mode, bno055_t* dev);
+void bno055SetAxisRemap(bno055_axis_remap_config_t remapcode, bno055_t* dev);
+void bno055SetAxisSign(bno055_axis_remap_sign_t remapsign, bno055_t* dev);
+void bno055GetRevInfo(bno055_rev_info_t *, bno055_t* dev);
+void bno055SetExtCrystalUse(bool usextal, bno055_t* dev);
+void bno055GetSystemStatus(uint8_t *system_status, uint8_t *self_test_result,
                       uint8_t *system_error, bno055_t* dev);
-void getCalibration(uint8_t *system, uint8_t *gyro, uint8_t *accel,
+void bno055GetCalibration(uint8_t *system, uint8_t *gyro, uint8_t *accel,
                     uint8_t *mag, bno055_t* dev);
 
-void getVector(double* xyz, adafruit_vector_type_t vector_type, bno055_t* dev);
-Quaternion getQuat();
-int8_t getTemp(bno055_t* dev);
+void bno055GetVector(double* xyz, bno055_vector_type_t vector_type, bno055_t* dev);
+// Quaternion getQuat();
+int8_t bno055GetTemp(bno055_t* dev);
 
 /* Adafruit_Sensor implementation */
 // bool getEvent(sensors_event_t *);
-// bool getEvent(sensors_event_t *, adafruit_vector_type_t);
+// bool getEvent(sensors_event_t *, bno055_vector_type_t);
 // void getSensor(sensor_t *);
 
 /* Functions to deal with raw calibration data */
-bool getSensorOffsetsArr(uint8_t* calibData, bno055_t* dev);
-bool getSensorOffsets(bno055_offsets_t* offsets_type, bno055_t* dev);
-void setSensorOffsetsArr(const uint8_t* calibData, bno055_t* dev);
-void setSensorOffsets(const bno055_offsets_t* offsets_type, bno055_t* dev);
-bool isFullyCalibrated(bno055_t* dev);
+bool bno055GetSensorOffsetsArr(uint8_t* calibData, bno055_t* dev);
+bool bno055GetSensorOffsets(bno055_offsets_t* offsets_type, bno055_t* dev);
+void bno055SetSensorOffsetsArr(const uint8_t* calibData, bno055_t* dev);
+void bno055SetSensorOffsets(const bno055_offsets_t* offsets_type, bno055_t* dev);
+bool bno055IsFullyCalibrated(bno055_t* dev);
 
 /* Power managments functions */
-void enterSuspendMode(bno055_t* dev);
-void enterNormalMode(bno055_t* dev);
+void bno055EnterSuspendMode(bno055_t* dev);
+void bno055EnterNormalMode(bno055_t* dev);
 
 uint8_t bno055RegReadByte(uint8_t regAdd, bno055_t* dev);
 void bno055RegWriteByte(uint8_t regAdd, uint8_t data, bno055_t* dev);

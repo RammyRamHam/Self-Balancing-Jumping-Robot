@@ -5,7 +5,8 @@
 //#include "driver/i2c.h"
 #include "i2c.h"
 #include "config.h"
-
+#include "utils.h"
+#include "string.h"
 
 /*!
  *  @brief  Sets up the HW
@@ -26,8 +27,8 @@
  *            OPERATION_MODE_NDOF]
  *  @return true if process is successful
  */
-bool begin(bno055_t* dev) {
-  
+bool bno055Begin(bno055_opmode_t mode, bno055_t* dev) {
+    i2cInit();
     // if (!i2c_dev->begin()) {
     //     return false;
     // }
@@ -35,7 +36,7 @@ bool begin(bno055_t* dev) {
     /* Make sure we have the right device */
     uint8_t id = bno055RegReadByte(BNO055_CHIP_ID_ADDR, dev);
     if (id != BNO055_ID) {
-        delay(1000); // hold on for boot
+        delayMs(1000); // hold on for boot
         id = bno055RegReadByte(BNO055_CHIP_ID_ADDR, dev);
         if (id != BNO055_ID) {
             return false; // still not? ok bail
@@ -44,20 +45,20 @@ bool begin(bno055_t* dev) {
 
 
     /* Switch to config mode (just in case since this is the default) */
-    setMode(OPERATION_MODE_CONFIG, dev);
+    bno055SetMode(OPERATION_MODE_CONFIG, dev);
 
     /* Reset */
     bno055RegWriteByte(BNO055_SYS_TRIGGER_ADDR, 0x20, dev);
     /* Delay incrased to 30ms due to power issues https://tinyurl.com/y375z699 */
-    delay(30);
+    delayMs(30);
     while (bno055RegReadByte(BNO055_CHIP_ID_ADDR, dev) != BNO055_ID) {
-        delay(10);
+        delayMs(10);
     }
-    delay(50);
+    delayMs(50);
 
     /* Set to normal power mode */
     bno055RegWriteByte(BNO055_PWR_MODE_ADDR, POWER_MODE_NORMAL, dev);
-    delay(10);
+    delayMs(10);
 
     bno055RegWriteByte(BNO055_PAGE_ID_ADDR, 0, dev);
 
@@ -74,20 +75,45 @@ bool begin(bno055_t* dev) {
     /* Configure axis mapping (see section 3.4) */
     /*
     bno055RegWriteByte(BNO055_AXIS_MAP_CONFIG_ADDR, REMAP_CONFIG_P2); // P0-P7, Default is P1
-    delay(10);
+    delayMs(10);
     bno055RegWriteByte(BNO055_AXIS_MAP_SIGN_ADDR, REMAP_SIGN_P2); // P0-P7, Default is P1
-    delay(10);
+    delayMs(10);
     */
 
     bno055RegWriteByte(BNO055_SYS_TRIGGER_ADDR, 0x0, dev);
-    delay(10);
+    delayMs(10);
     // /* Set the requested operating mode (see section 3.3) */
-    // setMode(dev->mode, dev);
-    delay(20);
+    bno055SetMode(mode, dev);
+    delayMs(20);
 
     return true;
 }
   
+
+void bno055Reset(bno055_t* dev) {
+    bno055_opmode_t prevMode = dev->mode;
+
+    bno055SetMode(OPERATION_MODE_CONFIG, dev);
+
+    bno055RegWriteByte(BNO055_SYS_TRIGGER_ADDR, 0x20, dev);
+    delayMs(30);
+    while (bno055RegReadByte(BNO055_CHIP_ID_ADDR, dev) != BNO055_ID) {
+        delayMs(10);
+    }
+    delayMs(50);
+
+    bno055RegWriteByte(BNO055_PWR_MODE_ADDR, POWER_MODE_NORMAL, dev);
+    delayMs(10);
+
+    bno055RegWriteByte(BNO055_PAGE_ID_ADDR, 0, dev);
+
+    bno055RegWriteByte(BNO055_SYS_TRIGGER_ADDR, 0x0, dev);
+    delayMs(10);
+
+    bno055SetMode(prevMode, dev);
+    delayMs(20);
+}
+
 /*!
  *  @brief  Puts the chip in the specified operating mode
  *  @param  mode
@@ -106,10 +132,10 @@ bool begin(bno055_t* dev) {
  *            OPERATION_MODE_NDOF_FMC_OFF,
  *            OPERATION_MODE_NDOF]
  */
-void setMode(bno055_opmode_t mode, bno055_t* dev) {
+void bno055SetMode(bno055_opmode_t mode, bno055_t* dev) {
   dev->mode = mode;
   bno055RegWriteByte(BNO055_OPR_MODE_ADDR, dev->mode, dev);
-  delay(30);
+  delayMs(30);
 }
 
 /*!
@@ -125,16 +151,16 @@ void setMode(bno055_opmode_t mode, bno055_t* dev) {
  *           REMAP_CONFIG_P6
  *           REMAP_CONFIG_P7]
  */
-void setAxisRemap(bno055_axis_remap_config_t remapcode, bno055_t* dev) {
+void bno055SetAxisRemap(bno055_axis_remap_config_t remapcode, bno055_t* dev) {
   bno055_opmode_t modeback = dev->mode;
 
-  setMode(OPERATION_MODE_CONFIG, dev);
-  delay(25);
+  bno055SetMode(OPERATION_MODE_CONFIG, dev);
+  delayMs(25);
   bno055RegWriteByte(BNO055_AXIS_MAP_CONFIG_ADDR, remapcode, dev);
-  delay(10);
+  delayMs(10);
   /* Set the requested operating mode (see section 3.3) */
-  setMode(modeback, dev);
-  delay(20);
+  bno055SetMode(modeback, dev);
+  delayMs(20);
 }
 
 /*!
@@ -150,16 +176,16 @@ void setAxisRemap(bno055_axis_remap_config_t remapcode, bno055_t* dev) {
  *           REMAP_SIGN_P6
  *           REMAP_SIGN_P7]
  */
-void setAxisSign(bno055_axis_remap_sign_t remapsign, bno055_t* dev) {
+void bno055SetAxisSign(bno055_axis_remap_sign_t remapsign, bno055_t* dev) {
   bno055_opmode_t modeback = dev->mode;
 
-  setMode(OPERATION_MODE_CONFIG, dev);
-  delay(25);
+  bno055SetMode(OPERATION_MODE_CONFIG, dev);
+  delayMs(25);
   bno055RegWriteByte(BNO055_AXIS_MAP_SIGN_ADDR, remapsign, dev);
-  delay(10);
+  delayMs(10);
   /* Set the requested operating mode (see section 3.3) */
-  setMode(modeback, dev);
-  delay(20);
+  bno055SetMode(modeback, dev);
+  delayMs(20);
 }
 
 /*!
@@ -167,22 +193,22 @@ void setAxisSign(bno055_axis_remap_sign_t remapsign, bno055_t* dev) {
  *  @param  usextal
  *          use external crystal boolean
  */
-void setExtCrystalUse(bool usextal, bno055_t* dev) {
+void bno055SetExtCrystalUse(bool usextal, bno055_t* dev) {
   bno055_opmode_t modeback = dev->mode;
 
   /* Switch to config mode (just in case since this is the default) */
-  setMode(OPERATION_MODE_CONFIG, dev);
-  delay(25);
+  bno055SetMode(OPERATION_MODE_CONFIG, dev);
+  delayMs(25);
   bno055RegWriteByte(BNO055_PAGE_ID_ADDR, 0, dev);
   if (usextal) {
     bno055RegWriteByte(BNO055_SYS_TRIGGER_ADDR, 0x80, dev);
   } else {
     bno055RegWriteByte(BNO055_SYS_TRIGGER_ADDR, 0x00, dev);
   }
-  delay(10);
+  delayMs(10);
   /* Set the requested operating mode (see section 3.3) */
-  setMode(modeback, dev);
-  delay(20);
+  bno055SetMode(modeback, dev);
+  delayMs(20);
 }
 
 /*!
@@ -194,7 +220,7 @@ void setExtCrystalUse(bool usextal, bno055_t* dev) {
  *   @param  system_error
  *           system error info
  */
-void getSystemStatus(uint8_t *system_status, uint8_t *self_test_result, uint8_t *system_error, bno055_t* dev) {
+void bno055GetSystemStatus(uint8_t *system_status, uint8_t *self_test_result, uint8_t *system_error, bno055_t* dev) {
   bno055RegWriteByte(BNO055_PAGE_ID_ADDR, 0, dev);
 
   /* System Status (see section 4.3.58)
@@ -241,7 +267,7 @@ void getSystemStatus(uint8_t *system_status, uint8_t *self_test_result, uint8_t 
   if (system_error != 0)
     *system_error = bno055RegReadByte(BNO055_SYS_ERR_ADDR, dev);
 
-  delay(200);
+  delayMs(200);
 }
 
 /*!
@@ -249,7 +275,7 @@ void getSystemStatus(uint8_t *system_status, uint8_t *self_test_result, uint8_t 
  *  @param  info
  *          revision info
  */
-void getRevInfo(bno055_rev_info_t *info, bno055_t* dev) {
+void bno055GetRevInfo(bno055_rev_info_t *info, bno055_t* dev) {
   uint8_t a, b;
 
   memset(info, 0, sizeof(bno055_rev_info_t));
@@ -286,7 +312,7 @@ void getRevInfo(bno055_rev_info_t *info, bno055_t* dev) {
  *  @param  mag
  *          Current calibration status of Magnetometer, read-only
  */
-void getCalibration(uint8_t *sys, uint8_t *gyro, uint8_t *accel, uint8_t *mag, bno055_t* dev) {
+void bno055GetCalibration(uint8_t *sys, uint8_t *gyro, uint8_t *accel, uint8_t *mag, bno055_t* dev) {
   uint8_t calData = bno055RegReadByte(BNO055_CALIB_STAT_ADDR, dev);
   if (sys != NULL) {
     *sys = (calData >> 6) & 0x03;
@@ -306,7 +332,7 @@ void getCalibration(uint8_t *sys, uint8_t *gyro, uint8_t *accel, uint8_t *mag, b
  *  @brief  Gets the temperature in degrees celsius
  *  @return temperature in degrees celsius
  */
-int8_t getTemp(bno055_t* dev) {
+int8_t bno055GetTemp(bno055_t* dev) {
   int8_t temp = (int8_t)(bno055RegReadByte(BNO055_TEMP_ADDR, dev));
   return temp;
 }
@@ -323,7 +349,7 @@ int8_t getTemp(bno055_t* dev) {
  *            VECTOR_GRAVITY]
  *  @return  vector from specified source
  */
-void getVector(double* xyz, adafruit_vector_type_t vector_type, bno055_t* dev) {
+void bno055GetVector(double* xyz, bno055_vector_type_t vector_type, bno055_t* dev) {
   uint8_t buffer[6];
   memset(buffer, 0, 6);
 
@@ -341,46 +367,44 @@ void getVector(double* xyz, adafruit_vector_type_t vector_type, bno055_t* dev) {
    * Convert the value to an appropriate range (section 3.6.4)
    * and assign the value to the Vector type
    */
-  switch (vector_type) {
-  case VECTOR_MAGNETOMETER:
-    /* 1uT = 16 LSB */
-    xyz[0] = ((double)x) / 16.0;
-    xyz[1] = ((double)y) / 16.0;
-    xyz[2] = ((double)z) / 16.0;
-    break;
-  case VECTOR_GYROSCOPE:
-    /* 1dps = 16 LSB */
-    xyz[0] = ((double)x) / 16.0;
-    xyz[1] = ((double)y) / 16.0;
-    xyz[2] = ((double)z) / 16.0;
-    break;
-  case VECTOR_EULER:
-    /* 1 degree = 16 LSB */
-    xyz[0] = ((double)x) / 16.0;
-    xyz[1] = ((double)y) / 16.0;
-    xyz[2] = ((double)z) / 16.0;
-    break;
-  case VECTOR_ACCELEROMETER:
-    /* 1m/s^2 = 100 LSB */
-    xyz[0] = ((double)x) / 100.0;
-    xyz[1] = ((double)y) / 100.0;
-    xyz[2] = ((double)z) / 100.0;
-    break;
-  case VECTOR_LINEARACCEL:
-    /* 1m/s^2 = 100 LSB */
-    xyz[0] = ((double)x) / 100.0;
-    xyz[1] = ((double)y) / 100.0;
-    xyz[2] = ((double)z) / 100.0;
-    break;
-  case VECTOR_GRAVITY:
-    /* 1m/s^2 = 100 LSB */
-    xyz[0] = ((double)x) / 100.0;
-    xyz[1] = ((double)y) / 100.0;
-    xyz[2] = ((double)z) / 100.0;
-    break;
-  }
-
-  return xyz;
+    switch (vector_type) {
+        case VECTOR_MAGNETOMETER:
+            /* 1uT = 16 LSB */
+            xyz[0] = ((double)x) / 16.0;
+            xyz[1] = ((double)y) / 16.0;
+            xyz[2] = ((double)z) / 16.0;
+            break;
+        case VECTOR_GYROSCOPE:
+            /* 1dps = 16 LSB */
+            xyz[0] = ((double)x) / 16.0;
+            xyz[1] = ((double)y) / 16.0;
+            xyz[2] = ((double)z) / 16.0;
+            break;
+        case VECTOR_EULER:
+            /* 1 degree = 16 LSB */
+            xyz[0] = ((double)x) / 16.0;
+            xyz[1] = ((double)y) / 16.0;
+            xyz[2] = ((double)z) / 16.0;
+            break;
+        case VECTOR_ACCELEROMETER:
+            /* 1m/s^2 = 100 LSB */
+            xyz[0] = ((double)x) / 100.0;
+            xyz[1] = ((double)y) / 100.0;
+            xyz[2] = ((double)z) / 100.0;
+            break;
+        case VECTOR_LINEARACCEL:
+            /* 1m/s^2 = 100 LSB */
+            xyz[0] = ((double)x) / 100.0;
+            xyz[1] = ((double)y) / 100.0;
+            xyz[2] = ((double)z) / 100.0;
+            break;
+        case VECTOR_GRAVITY:
+            /* 1m/s^2 = 100 LSB */
+            xyz[0] = ((double)x) / 100.0;
+            xyz[1] = ((double)y) / 100.0;
+            xyz[2] = ((double)z) / 100.0;
+            break;
+    }
 }
 
 // /*!
@@ -466,7 +490,7 @@ void getVector(double* xyz, adafruit_vector_type_t vector_type, bno055_t* dev) {
 //  *  @return always returns true
 //  */
 // bool getEvent(sensors_event_t *event,
-//                                adafruit_vector_type_t vec_type) {
+//                                bno055_vector_type_t vec_type) {
 //   /* Clear the event */
 //   memset(event, 0, sizeof(sensors_event_t));
 
@@ -529,14 +553,14 @@ void getVector(double* xyz, adafruit_vector_type_t vector_type, bno055_t* dev) {
  *          Calibration offset (buffer size should be 22)
  *  @return true if read is successful
  */
-bool getSensorOffsetsArr(uint8_t* calibData, bno055_t* dev) {
-  if (isFullyCalibrated(dev)) {
+bool bno055GetSensorOffsetsArr(uint8_t* calibData, bno055_t* dev) {
+  if (bno055IsFullyCalibrated(dev)) {
     bno055_opmode_t lastMode = dev->mode;
-    setMode(OPERATION_MODE_CONFIG, dev);
+    bno055SetMode(OPERATION_MODE_CONFIG, dev);
 
     bno055RegReadBytes(ACCEL_OFFSET_X_LSB_ADDR, calibData, NUM_BNO055_OFFSET_REGISTERS, dev);
 
-    setMode(lastMode, dev);
+    bno055SetMode(lastMode, dev);
     return true;
   }
   return false;
@@ -548,11 +572,11 @@ bool getSensorOffsetsArr(uint8_t* calibData, bno055_t* dev) {
  *          type of offsets
  *  @return true if read is successful
  */
-bool getSensorOffsets(bno055_offsets_t* offsets_type, bno055_t* dev) {
-    if (isFullyCalibrated(dev)) {
+bool bno055GetSensorOffsets(bno055_offsets_t* offsets_type, bno055_t* dev) {
+    if (bno055IsFullyCalibrated(dev)) {
       bno055_opmode_t lastMode = dev->mode;
-      setMode(OPERATION_MODE_CONFIG, dev);
-      delay(25);
+      bno055SetMode(OPERATION_MODE_CONFIG, dev);
+      delayMs(25);
 
       /* Accel offset range depends on the G-range:
         +/-2g  = +/- 2000 mg
@@ -596,7 +620,7 @@ bool getSensorOffsets(bno055_offsets_t* offsets_type, bno055_t* dev) {
       offsets_type->mag_radius =
           (bno055RegReadByte(MAG_RADIUS_MSB_ADDR, dev) << 8) | (bno055RegReadByte(MAG_RADIUS_LSB_ADDR, dev));
 
-      setMode(lastMode, dev);
+      bno055SetMode(lastMode, dev);
       return true;
     }
 
@@ -608,10 +632,10 @@ bool getSensorOffsets(bno055_offsets_t* offsets_type, bno055_t* dev) {
  *  @param  calibData
  *          calibration data
  */
-void setSensorOffsetsArr(const uint8_t* calibData, bno055_t* dev) {
+void bno055SetSensorOffsetsArr(const uint8_t* calibData, bno055_t* dev) {
   bno055_opmode_t lastMode = dev->mode;
-  setMode(OPERATION_MODE_CONFIG, dev);
-  delay(25);
+  bno055SetMode(OPERATION_MODE_CONFIG, dev);
+  delayMs(25);
 
   /* Note: Configuration will take place only when user writes to the last
      byte of each config data pair (ex. ACCEL_OFFSET_Z_MSB_ADDR, etc.).
@@ -646,7 +670,7 @@ void setSensorOffsetsArr(const uint8_t* calibData, bno055_t* dev) {
   bno055RegWriteByte(MAG_RADIUS_LSB_ADDR, calibData[20], dev);
   bno055RegWriteByte(MAG_RADIUS_MSB_ADDR, calibData[21], dev);
 
-  setMode(lastMode, dev);
+  bno055SetMode(lastMode, dev);
 }
 
 /*!
@@ -664,10 +688,10 @@ void setSensorOffsetsArr(const uint8_t* calibData, bno055_t* dev) {
  *          gyro_offset_y  = gyroscrope offset y
  *          gyro_offset_z  = gyroscrope offset z
  */
-void setSensorOffsets(const bno055_offsets_t* offsets_type, bno055_t* dev) {
+void bno055SetSensorOffsets(const bno055_offsets_t* offsets_type, bno055_t* dev) {
   bno055_opmode_t lastMode = dev->mode;
-  setMode(OPERATION_MODE_CONFIG, dev);
-  delay(25);
+  bno055SetMode(OPERATION_MODE_CONFIG, dev);
+  delayMs(25);
 
   /* Note: Configuration will take place only when user writes to the last
      byte of each config data pair (ex. ACCEL_OFFSET_Z_MSB_ADDR, etc.).
@@ -701,66 +725,66 @@ void setSensorOffsets(const bno055_offsets_t* offsets_type, bno055_t* dev) {
   bno055RegWriteByte(MAG_RADIUS_LSB_ADDR, (offsets_type->mag_radius) & 0x0FF, dev);
   bno055RegWriteByte(MAG_RADIUS_MSB_ADDR, (offsets_type->mag_radius >> 8) & 0x0FF, dev);
 
-  setMode(lastMode, dev);
+  bno055SetMode(lastMode, dev);
 }
 
 /*!
  *  @brief  Checks of all cal status values are set to 3 (fully calibrated)
  *  @return status of calibration
  */
-bool isFullyCalibrated(bno055_t* dev) {
-  uint8_t system, gyro, accel, mag;
-  getCalibration(&system, &gyro, &accel, &mag, dev);
+bool bno055IsFullyCalibrated(bno055_t* dev) {
+    uint8_t system, gyro, accel, mag;
+    bno055GetCalibration(&system, &gyro, &accel, &mag, dev);
 
-  switch (dev->mode) {
-  case OPERATION_MODE_ACCONLY:
-    return (accel == 3);
-  case OPERATION_MODE_MAGONLY:
-    return (mag == 3);
-  case OPERATION_MODE_GYRONLY:
-  case OPERATION_MODE_M4G: /* No magnetometer calibration required. */
-    return (gyro == 3);
-  case OPERATION_MODE_ACCMAG:
-  case OPERATION_MODE_COMPASS:
-    return (accel == 3 && mag == 3);
-  case OPERATION_MODE_ACCGYRO:
-  case OPERATION_MODE_IMUPLUS:
-    return (accel == 3 && gyro == 3);
-  case OPERATION_MODE_MAGGYRO:
-    return (mag == 3 && gyro == 3);
-  default:
-    return (system == 3 && gyro == 3 && accel == 3 && mag == 3);
-  }
+    switch (dev->mode) {
+        case OPERATION_MODE_ACCONLY:
+            return (accel == 3);
+        case OPERATION_MODE_MAGONLY:
+            return (mag == 3);
+        case OPERATION_MODE_GYRONLY:
+        case OPERATION_MODE_M4G: /* No magnetometer calibration required. */
+            return (gyro == 3);
+        case OPERATION_MODE_ACCMAG:
+        case OPERATION_MODE_COMPASS:
+            return (accel == 3 && mag == 3);
+        case OPERATION_MODE_ACCGYRO:
+        case OPERATION_MODE_IMUPLUS:
+            return (accel == 3 && gyro == 3);
+        case OPERATION_MODE_MAGGYRO:
+            return (mag == 3 && gyro == 3);
+        default:
+            return (system == 3 && gyro == 3 && accel == 3 && mag == 3);
+    }
 }
 
 /*!
  *  @brief  Enter Suspend mode (i.e., sleep)
  */
-void enterSuspendMode(bno055_t* dev) {
+void bno055EnterSuspendMode(bno055_t* dev) {
   bno055_opmode_t modeback = dev->mode;
 
   /* Switch to config mode (just in case since this is the default) */
-  setMode(OPERATION_MODE_CONFIG, dev);
-  delay(25);
+  bno055SetMode(OPERATION_MODE_CONFIG, dev);
+  delayMs(25);
   bno055RegWriteByte(BNO055_PWR_MODE_ADDR, 0x02, dev);
   /* Set the requested operating mode (see section 3.3) */
-  setMode(modeback, dev);
-  delay(20);
+  bno055SetMode(modeback, dev);
+  delayMs(20);
 }
 
 /*!
  *  @brief  Enter Normal mode (i.e., wake)
  */
-void enterNormalMode(bno055_t* dev) {
+void bno055EnterNormalMode(bno055_t* dev) {
   bno055_opmode_t modeback = dev->mode;
 
   /* Switch to config mode (just in case since this is the default) */
-  setMode(OPERATION_MODE_CONFIG, dev);
-  delay(25);
+  bno055SetMode(OPERATION_MODE_CONFIG, dev);
+  delayMs(25);
   bno055RegWriteByte(BNO055_PWR_MODE_ADDR, 0x00, dev);
   /* Set the requested operating mode (see section 3.3) */
-  setMode(modeback, dev);
-  delay(20);
+  bno055SetMode(modeback, dev);
+  delayMs(20);
 }
 
 // /*!

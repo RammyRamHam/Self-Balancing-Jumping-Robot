@@ -11,8 +11,17 @@
 #include "esp_console.h"
 #include "argtable3/argtable3.h"
 
-#define MOTOR_LEFT_GPIO GPIO_NUM_2
-#define MOTOR_RIGHT_GPIO GPIO_NUM_15
+#define LEFT_DRIVE_MOTOR_LEFT_GPIO 33
+#define LEFT_DRIVE_MOTOR_RIGHT_GPIO 32
+
+#define RIGHT_DRIVE_MOTOR_LEFT_GPIO 33
+#define RIGHT_DRIVE_MOTOR_RIGHT_GPIO 32
+
+#define LEFT_JUMP_MOTOR_LEFT_GPIO 33
+#define LEFT_JUMP_MOTOR_RIGHT_GPIO 32
+
+#define RIGHT_JUMP_MOTOR_LEFT_GPIO 33
+#define RIGHT_JUMP_MOTOR_RIGHT_GPIO 32
 
 
 // void configureGPIO(void) {
@@ -71,7 +80,7 @@ void app_main(void) {
     mcpwm_config_t motorConfig = getMotorConfig();
     configureMotor(&motorConfig);
 
-    setMotorSpeed(10.0);
+    setMotorSpeed(-50.0);
 
     //startMotor();
 
