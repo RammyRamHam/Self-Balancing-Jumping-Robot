@@ -11,18 +11,7 @@
 #include "esp_console.h"
 #include "argtable3/argtable3.h"
 
-#define LEFT_DRIVE_MOTOR_LEFT_GPIO 33
-#define LEFT_DRIVE_MOTOR_RIGHT_GPIO 32
-
-#define RIGHT_DRIVE_MOTOR_LEFT_GPIO 33
-#define RIGHT_DRIVE_MOTOR_RIGHT_GPIO 32
-
-#define LEFT_JUMP_MOTOR_LEFT_GPIO 33
-#define LEFT_JUMP_MOTOR_RIGHT_GPIO 32
-
-#define RIGHT_JUMP_MOTOR_LEFT_GPIO 33
-#define RIGHT_JUMP_MOTOR_RIGHT_GPIO 32
-
+#include "motors.h"
 
 // void configureGPIO(void) {
 //     gpio_reset_pin(MOTOR_LEFT_GPIO);
@@ -32,55 +21,21 @@
 //     gpio_set_direction(MOTOR_RIGHT_GPIO, GPIO_MODE_OUTPUT);
 // }
 
-mcpwm_config_t getMotorConfig(void) {
-    mcpwm_config_t motorConfig;
-    motorConfig.frequency = 1500;
-    motorConfig.cmpr_a = 0;
-    motorConfig.cmpr_b = 0;
-    motorConfig.duty_mode = MCPWM_DUTY_MODE_0;
-    motorConfig.counter_mode = MCPWM_UP_COUNTER;
-
-    return motorConfig;
-}
-
-void configureMotor(mcpwm_config_t* motorConfig) {
-    mcpwm_gpio_init(MCPWM_UNIT_0, MCPWM0A , MOTOR_LEFT_GPIO);
-    mcpwm_gpio_init(MCPWM_UNIT_0, MCPWM0B, MOTOR_RIGHT_GPIO);
-
-    mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_0, motorConfig);
-}
-
-void setMotorSpeed(float speed) {
-    if (speed > 0) {
-        mcpwm_set_duty(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_GEN_A, speed);
-        mcpwm_set_duty(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_GEN_B, 0.0);
-    } else {
-        mcpwm_set_duty(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_GEN_A, 0.0);
-        mcpwm_set_duty(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_GEN_B, -speed);
-    }
-}
-
-void startMotor(void) {
-    mcpwm_start(MCPWM_UNIT_0, MCPWM_TIMER_0);
-}
-
-void stopMotor(void) {
-    mcpwm_stop(MCPWM_UNIT_0, MCPWM_TIMER_0);
-}
-
 void app_main(void) {
-    // mcpwm_config_t motorConfig;
-    // motorConfig.frequency = 10000000;
-    // motorConfig.cmpr_a = 0;
-    // motorConfig.cmpr_b = 0;
-    // motorConfig.duty_mode = MCPWM_DUTY_MODE_0;
-    // motorConfig.counter_mode = MCPWM_UP_COUNTER;
+    motor_t leftDriveMotor = getLeftDriveMotor();
+    motor_t rightDriveMotor = getRightDriveMotor();
+    motor_t leftJumpMotor = getLeftJumpMotor();
+    motor_t rightJumpMotor = getRightJumpMotor();
 
-    // configureGPIO();
-    mcpwm_config_t motorConfig = getMotorConfig();
-    configureMotor(&motorConfig);
+    configureMotor(&leftDriveMotor);
+    configureMotor(&rightDriveMotor);
+    configureMotor(&leftJumpMotor);
+    configureMotor(&rightJumpMotor);
 
-    setMotorSpeed(-50.0);
+    setMotorSpeed(&leftDriveMotor, -10.0);
+    setMotorSpeed(&rightDriveMotor, -30.0);
+    setMotorSpeed(&leftJumpMotor, -50.0);
+    setMotorSpeed(&rightJumpMotor, -70.0);
 
     //startMotor();
 
