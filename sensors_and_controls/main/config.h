@@ -10,4 +10,10 @@
 #define I2C_MASTER_TIMEOUT_MS       1000
 #define I2C_TIMEOUT                 (1<<19)
 
+#define SPI_HANDSHAKE_GPIO 17
+#define SPI_MOSI_GPIO 23
+#define SPI_MISO_GPIO 19
+#define SPI_SCLK_GPIO 18
+#define SPI_CS_GPIO 5
+
 #endif
