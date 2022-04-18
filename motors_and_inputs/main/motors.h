@@ -1,6 +1,7 @@
 #ifndef _MOTORS_H_
 #define _MOTORS_H_
 
+#include <stdbool.h>
 #include "driver/mcpwm.h"
 
 typedef struct {
@@ -9,6 +10,8 @@ typedef struct {
     mcpwm_timer_t timer;
     mcpwm_io_signals_t leftPwmOut;
     mcpwm_io_signals_t rightPwmOut;
+    bool flipped;
+    float maxSpeed;
     int leftGpio;
     int rightGpio;
 } motor_t;

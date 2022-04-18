@@ -5,11 +5,33 @@
 #include "BNO055.h"
 #include "utils.h"
 #include "spi_master.h"
+#include "control.h"
+#include "config.h"
+#include "speaker.h"
+
 #define SAMPLE_DELAY 1
+
+#define NUM_MOTORS 4
 
 static const char *TAG = "sensors_and_controls";
 
-void app_main(void) {
+
+void sendReceiveTest(void) {
+    float sendAndReceive[NUM_MOTORS];
+
+    for (uint8_t i = 0; i < NUM_MOTORS; i++) {
+        sendAndReceive[i] = 0.0;
+    }
+
+    spi_device_handle_t spiSlave;
+    configSpiMaster(&spiSlave);
+
+    while (1) {
+        sendReceiveSpi(&spiSlave, sendAndReceive, sendAndReceive, sizeof(sendAndReceive));
+    }
+}
+
+void currTest(void) {
     bno055_t bno055Dev = {
         .devAdd = BNO055_ADDRESS_A,
         .mode = OPERATION_MODE_CONFIG,
@@ -25,17 +47,41 @@ void app_main(void) {
 
     double posData[3];
 
+    float toSend [NUM_MOTORS];
+    float toReceive [NUM_MOTORS];
+
+    for (uint8_t i = 0; i < NUM_MOTORS; i++) {
+        toSend[i] = 0.0;
+        toReceive[i] = 0.0;
+    }
+
     spi_device_handle_t spiSlave;
     configSpiMaster(&spiSlave);
 
-    double toReceive;
+    //bno055GetVector(posData, VECTOR_EULER, &bno055Dev);
+    //float initAngle = posData[1];
+
     while (1) {
         bno055GetVector(posData, VECTOR_EULER, &bno055Dev);
 
         ESP_LOGI(TAG, "X = %f, Y = %f, Z = %f", posData[0], posData[1], posData[2]);
 
-        // sendReceiveSpi(&spiSlave, &posData[1], &toReceive, sizeof(posData[1]));
+        //float currSpeed = initAngle - posData[1];
+        float currSpeed = pid(ANGLE_SETPOINT, posData[1]);
+        toSend[0] = currSpeed;
+        toSend[1] = currSpeed;
 
-        delayMs(SAMPLE_DELAY);
+        sendReceiveSpi(&spiSlave, toSend, toReceive, sizeof(toSend));
     }
+}
+
+void audioTest(void) {
+    speakerInit();
+    xTaskCreate(speakerPlay, "speakerPlay", 1024 * 2, NULL, 5, NULL);
+}
+
+void app_main(void) {
+    audioTest();
+    //6currTest();
+    //sendReceiveTest();
 }

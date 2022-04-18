@@ -27,6 +27,8 @@ motor_t getLeftDriveMotor(void) {
         .timer = MCPWM_TIMER_0,
         .leftPwmOut = MCPWM0A,
         .rightPwmOut = MCPWM0B,
+        .flipped = false,
+        .maxSpeed = 35.0,
         .leftGpio = LEFT_DRIVE_MOTOR_LEFT_GPIO,
         .rightGpio = LEFT_DRIVE_MOTOR_RIGHT_GPIO,
     };
@@ -41,6 +43,8 @@ motor_t getRightDriveMotor(void) {
         .timer = MCPWM_TIMER_1,
         .leftPwmOut = MCPWM1A,
         .rightPwmOut = MCPWM1B,
+        .flipped = true,
+        .maxSpeed = 35.0,
         .leftGpio = RIGHT_DRIVE_MOTOR_LEFT_GPIO,
         .rightGpio = RIGHT_DRIVE_MOTOR_RIGHT_GPIO,
     };
@@ -55,6 +59,8 @@ motor_t getLeftJumpMotor(void) {
         .timer = MCPWM_TIMER_0,
         .leftPwmOut = MCPWM0A,
         .rightPwmOut = MCPWM0B,
+        .flipped = false,
+        .maxSpeed = 35.0,
         .leftGpio = LEFT_JUMP_MOTOR_LEFT_GPIO,
         .rightGpio = LEFT_JUMP_MOTOR_RIGHT_GPIO,
     };
@@ -69,6 +75,8 @@ motor_t getRightJumpMotor(void) {
         .timer = MCPWM_TIMER_1,
         .leftPwmOut = MCPWM1A,
         .rightPwmOut = MCPWM1B,
+        .flipped = false,
+        .maxSpeed = 35.0,
         .leftGpio = RIGHT_JUMP_MOTOR_LEFT_GPIO,
         .rightGpio = RIGHT_JUMP_MOTOR_RIGHT_GPIO,
     };
@@ -77,10 +85,13 @@ motor_t getRightJumpMotor(void) {
 }
 
 void setMotorSpeed(motor_t* motor, float speed) {
+    speed = motor->flipped ? -speed : speed;
     if (speed > 0) {
+        speed = speed > motor->maxSpeed ? motor->maxSpeed : speed;
         mcpwm_set_duty(motor->mcpwmUnit, motor->timer, MCPWM_GEN_A, speed);
         mcpwm_set_duty(motor->mcpwmUnit, motor->timer, MCPWM_GEN_B, 0.0);
     } else {
+        speed = speed < -motor->maxSpeed ? -motor->maxSpeed : speed;
         mcpwm_set_duty(motor->mcpwmUnit, motor->timer, MCPWM_GEN_A, 0.0);
         mcpwm_set_duty(motor->mcpwmUnit, motor->timer, MCPWM_GEN_B, -speed);
     }
