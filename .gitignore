@@ -1,5 +1,10 @@
-build/
-sdkconfig
-sdkconfig.old
-.vscode
-.devcontainer
+motors_and_inputs/debug.log
+sensors_and_controls/debug.log
+motors_and_inputs/build/
+sensors_and_controls/build/
+#.vscode/c_cpp_properties.json
+#.vscode/launch.json
+#sdkconfig
+#sdkconfig.old
+#.vscode
+#.devcontainer

@@ -1,0 +1,27 @@
+{
+  "C_Cpp.intelliSenseEngine": "Default",
+  "idf.flashType": "UART",
+  "idf.portWin": "COM3",
+  "idf.adapterTargetName": "esp32",
+  "files.associations": {
+    "*.inc": "c",
+    "i2c.h": "c",
+    "*.tcc": "c",
+    "*.ipp": "c",
+    "array": "c",
+    "string": "c",
+    "string_view": "c",
+    "bno055.h": "c",
+    "math.h": "c",
+    "cstddef": "c",
+    "config.h": "c",
+    "future": "c",
+    "task.h": "c",
+    "freertos.h": "c",
+    "esp_adc_cal.h": "c",
+    "utils.h": "c",
+    "chrono": "c",
+    "complex": "c",
+    "esp_timer.h": "c"
+  }
+}

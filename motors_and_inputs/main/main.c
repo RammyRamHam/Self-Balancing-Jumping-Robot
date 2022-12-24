@@ -60,7 +60,7 @@ void sendReceiveTest(void) {
 
         setMotorSpeed(&leftDriveMotor, toReceive[0]);
         setMotorSpeed(&rightDriveMotor, toReceive[1]);
-        //setMotorSpeed(&leftJumpMotor, toReceive[2]);
+        //setMotorSpeed(&leftJumpMotor, toReceive[2])portTICK_PERIOD_MS;
         //setMotorSpeed(&rightJumpMotor, toReceive[3]);
         vTaskDelay(75 / portTICK_PERIOD_MS);
     }
