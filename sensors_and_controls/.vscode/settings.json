@@ -1,7 +1,7 @@
 {
   "C_Cpp.intelliSenseEngine": "Default",
   "idf.flashType": "UART",
-  "idf.portWin": "COM3",
+  "idf.portWin": "COM5",
   "idf.adapterTargetName": "esp32",
   "files.associations": {
     "*.inc": "c",
@@ -22,6 +22,7 @@
     "utils.h": "c",
     "chrono": "c",
     "complex": "c",
-    "esp_timer.h": "c"
+    "esp_timer.h": "c",
+    "speaker.h": "c"
   }
 }

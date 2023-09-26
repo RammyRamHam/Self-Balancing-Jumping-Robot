@@ -16,12 +16,12 @@
 #define SPI_SCLK_GPIO               18
 #define SPI_CS_GPIO                 5
 
-#define PID_KP                      -0.5
+#define PID_KP                      -3
 #define PID_KI                      0.0
 #define PID_KD                      0.0
 #define PID_MAX_I                   0.0
 
-#define ANGLE_SETPOINT              52.0
+#define ANGLE_SETPOINT              55.0
 
 #define I2S_SAMPLE_RATE             16000
 #define I2S_NUM                     0

@@ -28,7 +28,7 @@ motor_t getLeftDriveMotor(void) {
         .leftPwmOut = MCPWM0A,
         .rightPwmOut = MCPWM0B,
         .flipped = false,
-        .maxSpeed = 35.0,
+        .maxSpeed = 100,//35.0,
         .leftGpio = LEFT_DRIVE_MOTOR_LEFT_GPIO,
         .rightGpio = LEFT_DRIVE_MOTOR_RIGHT_GPIO,
     };
@@ -44,7 +44,7 @@ motor_t getRightDriveMotor(void) {
         .leftPwmOut = MCPWM1A,
         .rightPwmOut = MCPWM1B,
         .flipped = true,
-        .maxSpeed = 35.0,
+        .maxSpeed = 100,//35.0,
         .leftGpio = RIGHT_DRIVE_MOTOR_LEFT_GPIO,
         .rightGpio = RIGHT_DRIVE_MOTOR_RIGHT_GPIO,
     };

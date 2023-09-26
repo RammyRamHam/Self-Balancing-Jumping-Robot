@@ -81,7 +81,9 @@ void audioTest(void) {
 }
 
 void app_main(void) {
-    audioTest();
-    //6currTest();
+    ESP_LOGI(TAG, "Started!");
+
+    //audioTest();
+    currTest();
     //sendReceiveTest();
 }

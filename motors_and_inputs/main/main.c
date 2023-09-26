@@ -51,13 +51,14 @@ void sendReceiveTest(void) {
     while (1) {
         for (uint8_t i = 0; i < NUM_MOTORS; i++) {
             toSend[i] += 1.0;
-            if (toSend[i] > 100.0) {
+            if (toSend[i] > 35.0) {
                 toSend[i] = 0.0;
             }
         }
 
         sendReceiveSpi(toSend, toReceive, sizeof(toSend));
 
+        ESP_LOGI(TAG, "Left Speed = %f, Right Speed = %f", toReceive[0], toReceive[1]);
         setMotorSpeed(&leftDriveMotor, toReceive[0]);
         setMotorSpeed(&rightDriveMotor, toReceive[1]);
         //setMotorSpeed(&leftJumpMotor, toReceive[2])portTICK_PERIOD_MS;
@@ -127,7 +128,8 @@ void currTest(void) {
 }
 
 void app_main(void) {
-    //currTest();
+    ESP_LOGI(TAG, "Started!");
+    currTest();
     //sendReceiveTest();
     //motorTest();
 }
